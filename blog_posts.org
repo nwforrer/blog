@@ -1,0 +1,10 @@
+#+HUGO_SECTION: posts
+#+HUGO_BASE_DIR: ./
+
+* Hello
+** Hello World
+:PROPERTIES:
+:EXPORT_FILE_NAME: hello-world
+:EXPORT_DATE: 2019-06-23
+:END:
+Testing the site
