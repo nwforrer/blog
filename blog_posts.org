@@ -16,11 +16,47 @@ Testing the site
 :END:
 This set of tutorials is going to follow the [[http://rogueliketutorials.com/tutorials/tcod/][Python TCOD tutorial]], but will be
 written in Common Lisp and use the BearLibTerminal library.
+
 *** Prior Knowledge
 This tutorial assumes you are familiar with programming in Common Lisp. If
 you're not familiar, I would highly recommend checking out [[http://stevelosh.com/blog/2018/08/a-road-to-common-lisp/][A Road to Common Lisp]]
 on Steve Losh's blog. It provides many valuable resources to get up to speed
 with Common Lisp, and is how I got started.
 *** Installation
-I will be using the SBCL implementation, and Emacs as my editor. Specifically, I
-use the [[https://github.com/hlissner/doom-emacs][Doom Emacs]] configuration.
+You will need the following installed:
+- A Common Lisp implementation. I will be using and testing my code against
+  [[http://www.sbcl.org/][SBCL]].
+- [[https://www.quicklisp.org/beta/][Quicklisp]]
+- An editor. I use Emacs, with the [[https://github.com/hlissner/doom-emacs][Doom Emacs]] configuration.
+
+I run Linux (Fedora) on my machine, and SBCL is available in the default
+repositories. If it is not available in your distro (or if you're not running
+Linux), check out the [[http://www.sbcl.org/getting.html][getting started]] page.
+
+Quicklisp should be configured based on the installation guide on their [[https://www.quicklisp.org/beta/][home page]].
+
+For the Emacs configuration, the most important peice is to have a REPL
+available. I use the [[https://github.com/joaotavora/sly][sly]] package, although [[https://common-lisp.net/project/slime/][SLIME]] is popular as well. Having a
+REPL running in your editor makes the development process much more efficient
+and enjoyable.
+
+*** Project setup
+
+#+BEGIN_SRC common-lisp
+(asdf:defsystem #:cl-rltut
+  :description "Describe cl-rltut here"
+  :author "Nick Forrer"
+  :license  "MIT"
+  :version "0.0.1"
+  :serial t
+  :depends-on (#:cl-blt)
+  :components ((:file "package")
+               (:file "cl-rltut")))
+#+END_SRC
+
+** TODO Roguelike tutorial for Common Lisp - Part 1 :roguelike:gamedev:lisp:tutorial:
+:PROPERTIES:
+:EXPORT_FILE_NAME: roguelike-tutorial-part1
+:EXPORT_DATE: 2019-06-23
+:END:
+
