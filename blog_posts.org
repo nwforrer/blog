@@ -8,3 +8,19 @@
 :EXPORT_DATE: 2019-06-23
 :END:
 Testing the site
+* Tutorials :@tutorials:
+** TODO Roguelike tutorial for Common Lisp - Part 0 :roguelike:gamedev:lisp:tutorial:
+:PROPERTIES:
+:EXPORT_FILE_NAME: roguelike-tutorial-part0
+:EXPORT_DATE: 2019-06-23
+:END:
+This set of tutorials is going to follow the [[http://rogueliketutorials.com/tutorials/tcod/][Python TCOD tutorial]], but will be
+written in Common Lisp and use the BearLibTerminal library.
+*** Prior Knowledge
+This tutorial assumes you are familiar with programming in Common Lisp. If
+you're not familiar, I would highly recommend checking out [[http://stevelosh.com/blog/2018/08/a-road-to-common-lisp/][A Road to Common Lisp]]
+on Steve Losh's blog. It provides many valuable resources to get up to speed
+with Common Lisp, and is how I got started.
+*** Installation
+I will be using the SBCL implementation, and Emacs as my editor. Specifically, I
+use the [[https://github.com/hlissner/doom-emacs][Doom Emacs]] configuration.
