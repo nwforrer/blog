@@ -192,12 +192,14 @@ update it when an arrow key is pressed. Make updates to the following functions:
           :and player-y = (/ *screen-height* 2)
           :do
              (draw player-x player-y)
-             (let ((action (handle-keys)))
-               (if (getf action :quit)
+             (let* ((action (handle-keys))
+                    (move (getf action :move))
+                    (exit (getf action :quit)))
+               (if exit
                    (return))
-               (when (getf action :move)
-                 (incf player-x (car (getf action :move)))
-                 (incf player-y (cdr (getf action :move))))))))
+               (when move
+                 (incf player-x (car move))
+                 (incf player-y (cdr move)))))))
 ```
 
 If you run the game now, you should be able to move the player around using the
