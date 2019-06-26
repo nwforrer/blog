@@ -1,0 +1,337 @@
+#+HUGO_SECTION: posts
+#+HUGO_BASE_DIR: ../
+#+author: Nick Forrer
+
+* Hello
+** Hello World
+:PROPERTIES:
+:EXPORT_FILE_NAME: hello-world
+:EXPORT_DATE: 2019-06-23
+:END:
+Testing the site
+* Tutorials :@tutorials:
+** DONE Roguelike tutorial for Common Lisp - Part 0 - Setup :roguelike:gamedev:lisp:tutorial:
+CLOSED: [2019-06-23 Sun 10:24]
+:PROPERTIES:
+:EXPORT_FILE_NAME: roguelike-tutorial-part0
+:END:
+This set of tutorials is going to follow the [[http://rogueliketutorials.com/tutorials/tcod/][Python TCOD tutorial]], but will be
+written in Common Lisp and use the BearLibTerminal library.
+
+*** Prior Knowledge
+This tutorial assumes you are familiar with programming in Common Lisp. If
+you're not familiar, I would highly recommend checking out [[http://stevelosh.com/blog/2018/08/a-road-to-common-lisp/][A Road to Common Lisp]]
+on Steve Losh's blog. It provides many valuable resources to get up to speed
+with Common Lisp, and is how I got started.
+*** Installation
+You will need the following installed:
+- A Common Lisp implementation. I will be using and testing my code against
+  [[http://www.sbcl.org/][SBCL]].
+- [[https://www.quicklisp.org/beta/][Quicklisp]]
+- An editor. I use Emacs, with the [[https://github.com/hlissner/doom-emacs][Doom Emacs]] configuration.
+
+I run Linux (Fedora) on my machine, and SBCL is available in the default
+repositories. If it is not available in your distro (or if you're not running
+Linux), check out the [[http://www.sbcl.org/getting.html][getting started]] page.
+
+Quicklisp should be configured based on the installation guide on their [[https://www.quicklisp.org/beta/][home page]].
+
+For the Emacs configuration, the most important peice is to have a REPL
+available. I use the [[https://github.com/joaotavora/sly][sly]] package, although [[https://common-lisp.net/project/slime/][SLIME]] is popular as well. Having a
+REPL running in your editor makes the development process much more efficient
+and enjoyable.
+
+*** Project setup
+Once you have everything installed that you need, you can get the your project
+skeleton created, with the needed dependencies. Since you have Quicklisp
+installed, it will be easy to generate a project skeleton using [[https://www.xach.com/lisp/quickproject/][Quickproject]].
+
+First, open emacs and start your REPL (if you're using sly, the Emacs command is
+just M-x "sly"). In the REPL:
+
+#+BEGIN_SRC common-lisp
+(ql:quickload :quickproject)
+(quickproject:make-project #p"cl-rltut" :depends-on '(:cl-blt))
+#+END_SRC
+
+That should create a "cl-rltut" directory within the current working
+directory of your REPL (this can be shown for sly with the "sly-pwd" command,
+and changed with the "sly-cd" command). Within the project directory, you should
+see an ASDF file named "cl-rltut.asd", which looks like the following:
+#+BEGIN_SRC common-lisp
+(asdf:defsystem #:cl-rltut
+  :description "Describe cl-rltut here"
+  :author "Nick Forrer"
+  :license  "MIT"
+  :version "0.0.1"
+  :serial t
+  :depends-on (#:cl-blt)
+  :components ((:file "package")
+               (:file "cl-rltut")))
+#+END_SRC
+
+You will also need to download the cl-blt package, which contains the
+Common Lisp bindings for BearLibTerminal. The reason for this is because
+cl-blt is not currently available in an online repository that
+Quicklisp could download it automatically. Download the package using:
+
+#+BEGIN_SRC sh
+git clone https://github.com/sjl/cl-blt.git ~/quicklisp/local-projects/cl-blt
+#+END_SRC
+
+That will clone the cl-blt Git repo into a directory that Quicklisp will look at
+when trying to load an ASDF system.
+
+In addition to the Common Lisp bindings, you will also need the BearLibTerminal
+library itself. Download the appropriate binary for your system from
+http://foo.wyrd.name/en:bearlibterminal#download. Once downloaded, extract the
+archive and find the shared library dependency. For the Linux archive, this will
+be Linux64/libBearLibTerminal.so (assuming you are using a 64-bit OS). This file
+should be placed in a "lib" directory in the root of your project.
+
+To make it easier to load your project from the REPL, you can create a symlink
+in the local-projects directly that points to your project, so that Quicklisp
+can always find it (use the correct path to your project instead of ~/src/lisp/cl-rltut):
+
+#+BEGIN_SRC sh
+ln -s ~/src/lisp/cl-rltut ~/quicklisp/local-projects
+#+END_SRC
+
+With all of that in place, you should now be able to load your projects system
+in the REPL to ensure in can find all the dependencies with:
+
+#+BEGIN_SRC common-lisp
+(ql:quickload :cl-rltut)
+#+END_SRC
+
+Assuming you don't see any errors, then your project is all set to continue with
+the tutorial! To see what the project should look like at this point, you can
+find the current state for Part 0 here: https://github.com/nwforrer/cl-rltut/tree/part-0.
+
+*** Questions and Feedback
+If you run into any issues, or have some feedback, feel free to email me at:
+nwforrer AT gmail.com.
+
+Continue to the [[/posts/roguelike-tutorial-part1][next tutorial]].
+
+** DONE Roguelike tutorial for Common Lisp - Part 1 - Drawing the player :roguelike:gamedev:lisp:tutorial:
+CLOSED: [2019-06-25 Tue 20:10]
+:PROPERTIES:
+:EXPORT_FILE_NAME: roguelike-tutorial-part1
+:END:
+Welcome to the first part of the tutorial! If you haven't already, please check
+out [[/posts/roguelike-tutorial-part0][Part 0]] to get the project created.
+
+This tutorial series is based on the [[http://rogueliketutorials.com][Python Roguelike Tutorial]]. This will be
+covering [[http://rogueliketutorials.com/tutorials/tcod/part-1/][Part 1]] of that tutorial as closely as possible, with the exception of
+different structure to support more idiomatic Common Lisp, and with using
+BearLibTerminal instead of tcod.
+
+*** Opening a window
+First we'll work on getting a window created. The Common Lisp bindings we're
+using for BearLibTerminal provide some higher level functions to make
+interacting with the library more "lispy", so some of the function names won't
+align exactly with what you'll see in the BearLibTerminal documentation
+(although you can also call those methods, we'll mostly use the high level
+functions). You can find the documentation for the high-level API here:
+https://sjl.bitbucket.io/cl-blt/reference/.
+
+Open up emacs, and start your REPL. Load your project and change
+into your package:
+
+#+BEGIN_SRC common-lisp
+(ql:quickload :cl-rltut)
+(in-package :cl-rltut)
+#+END_SRC
+
+Now in the cl-rltut.lisp file, create a main function to open the window, set
+some configs, and enter into a loop:
+
+#+BEGIN_SRC common-lisp
+(defparameter *screen-width* 80)
+(defparameter *screen-height* 50)
+
+(defun draw ()
+  (blt:clear)
+  (blt:refresh))
+
+(defun config ()
+  (blt:set "window.resizeable = true")
+  (blt:set "window.size = ~Ax~A" *screen-width* *screen-height*)
+  (blt:set "window.title = Roguelike"))
+
+(defun main()
+  (blt:with-terminal
+    (config)
+    (loop :do
+      (draw)
+      (blt:key-case (blt:read)
+                    (:escape (return))
+                    (:close (return))))))
+#+END_SRC
+
+If you evaluate the buffer with `sly-eval-buffer`, you will be able to run the
+game from your REPL with:
+#+BEGIN_SRC common-lisp
+(main)
+#+END_SRC
+
+If everything was done correctly, you
+should see an empty window:
+
+[[/cl-rltut/empty-window.png]]
+
+Exciting! Let's step through the code to see what's going on.
+
+#+BEGIN_SRC common-lisp
+(defparameter *screen-width* 80)
+(defparameter *screen-height* 50)
+#+END_SRC
+
+This creates two global variables to store the width and height of the window,
+in cells. By default, the size of the cell is selected based on the font size.
+
+#+BEGIN_SRC common-lisp
+(blt:with-terminal ... )
+#+END_SRC
+
+This is a macro that wraps the terminal_open and terminal_close functions of the
+underlying library. The macro will open a terminal at the start, execute
+whatever code we pass within the call, and then close the terminal.
+
+#+BEGIN_SRC common-lisp
+(defun config ()
+  (blt:set "window.resizeable = true")
+  (blt:set "window.size = ~Ax~A" *screen-width* *screen-height*)
+  (blt:set "window.title = Roguelike"))
+#+END_SRC
+
+The `set` function is how you configure various library options, such as
+managing fonts, or setting window settings like we do here. The nice thing about
+the Common Lisp wrapper is that it allows the use of format directives to format
+the string. We take advantage of that when setting the window.size property to
+the width and height variables that we defined earlier. If you're not familiar
+with Common Lisp format directives, you can read more about them here: http://www.gigamonkeys.com/book/a-few-format-recipes.html.
+
+#+BEGIN_SRC common-lisp
+(loop :do ... )
+#+END_SRC
+
+This just starts up an endless loop that our game will run in.
+
+#+BEGIN_SRC common-lisp
+(blt:key-case (blt:read)
+              (:escape (return))
+              (:close (return)))
+#+END_SRC
+
+`key-case` is another macro defined in the high level API of the Common Lisp
+bindings. This is used to handle keyboard input. As the first parameter, it
+takes in an event from the keyboard. We're using the `read` function to get
+this data. If there are no events in the input queue, `read` will wait for an
+event to come. This blocking behaviour is perfect for our case, because it will
+make the turn-based gameplay easier.
+The second parameter to the `key-case` macro is a list of clauses. The first
+part of a clause, for example :escape, will match with the event returned from
+the `read` call. If the event is that the escape button was pressed, then the
+second part of the clause wil be executed. In that case, we just return from the
+main function to close the program. Only the code in a matching clause will be executed.
+
+#+BEGIN_SRC common-lisp
+(defun draw ()
+  (blt:clear)
+  (blt:refresh))
+#+END_SRC
+
+Here we just have a placeholder draw function, which will clear the window to
+black and then call `refresh`. All of the drawing that BearLibTerminal does is
+to an off-screen buffer, so we won't see our changes displayed until the
+`refresh` function is called. While we aren't actually drawing anything yet,
+this is needed to make the window visible. BearLibTerminal will only display the
+window with the first `refresh` call after opening the window. Prior to that,
+the window will stay invisible.
+
+*** Adding the player
+Now that we have a window, let's get the player drawn to the screen. Update the
+draw function to look like this:
+
+#+BEGIN_SRC common-lisp
+(defun draw()
+  (blt:clear)
+  (setf (blt:color) (blt:white)
+        (blt:cell-char 10 10) #\@)
+  (blt:refresh))
+#+END_SRC
+
+Pretty easy! When blt:color is set, that color will be used for all subsequent
+drawing until the color is changed again. Then, we set the cell at 10x10 to the
+@ character. If all works, you should see this when you run the game:
+
+[[/cl-rltut/drawing-player.png]]
+
+Next we'll want to be able to move the player around. We're already capturing
+some keyboard input, so it won't be difficult to capture the arrow keys as well.
+Then we just need to have a way to track the players position so that we can
+update it when an arrow key is pressed. Make updates to the following functions:
+
+#+BEGIN_SRC common-lisp
+(defun draw (player-x player-y)
+  (blt:clear)
+  (setf (blt:color) (blt:white)
+        (blt:cell-char player-x player-y) #\@)
+  (blt:refresh))
+
+(defun handle-keys ()
+  (let ((action nil))
+    (blt:key-case (blt:read)
+                  (:up (setf action (list :move (cons 0 -1))))
+                  (:down (setf action (list :move (cons 0 1))))
+                  (:left (setf action (list :move (cons -1 0))))
+                  (:right (setf action (list :move (cons 1 0))))
+                  (:escape (setf action (list :quit t)))
+                  (:close (setf action (list :quit t))))
+    action))
+
+(defun main()
+  (blt:with-terminal
+    (config)
+    (loop :with player-x = (/ *screen-width* 2)
+          :and player-y = (/ *screen-height* 2)
+          :do
+             (draw player-x player-y)
+             (let ((action (handle-keys)))
+               (if (getf action :quit)
+                   (return))
+               (when (getf action :move)
+                 (incf player-x (car (getf action :move)))
+                 (incf player-y (cdr (getf action :move))))))))
+#+END_SRC
+
+If you run the game now, you should be able to move the player around using the
+arrow keys.
+
+We created a new "handle-keys" function, and moved the input handling code into
+it. handle-keys returns a property list. When one of the arrow keys is pressed,
+the function would return something like:
+#+BEGIN_SRC common-lisp
+'(:move (0 . 1))
+#+END_SRC
+
+When looking at the return value, we can check what type of action is returned
+with:
+#+BEGIN_SRC common-lisp
+(getf action :move)
+#+END_SRC
+
+If we run that on the previous example, the result would be the (0 . 1), telling
+us that there was a move action to increment the player-y by 1. We can get the x
+and y portion of that with the car and cdr functions respectively. If there was no
+move action, getf would return nil.
+
+We also added player-x and player-y as local variables on the loop. This will be
+changed in the future to add some more structure, but works for now.
+
+*** Conclusion
+That's going to be it for this tutorial. You can find the current state of the
+code on [[https://github.com/nwforrer/cl-rltut/tree/part-1][Github]]. The list of changes since the previous tutorial can be found at
+https://github.com/nwforrer/cl-rltut/compare/part-0...part-1.

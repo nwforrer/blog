@@ -1,7 +1,7 @@
 +++
-title = "Roguelike tutorial for Common Lisp - Part 0"
+title = "Roguelike tutorial for Common Lisp - Part 0 - Setup"
 author = ["Nick Forrer"]
-date = 2019-06-23
+date = 2019-06-23T10:24:00-04:00
 tags = ["roguelike", "gamedev", "lisp", "tutorial"]
 categories = ["tutorials"]
 draft = false
@@ -90,6 +90,14 @@ archive and find the shared library dependency. For the Linux archive, this will
 be Linux64/libBearLibTerminal.so (assuming you are using a 64-bit OS). This file
 should be placed in a "lib" directory in the root of your project.
 
+To make it easier to load your project from the REPL, you can create a symlink
+in the local-projects directly that points to your project, so that Quicklisp
+can always find it (use the correct path to your project instead of ~/src/lisp/cl-rltut):
+
+```sh
+ln -s ~/src/lisp/cl-rltut ~/quicklisp/local-projects
+```
+
 With all of that in place, you should now be able to load your projects system
 in the REPL to ensure in can find all the dependencies with:
 
@@ -106,3 +114,5 @@ find the current state for Part 0 here: <https://github.com/nwforrer/cl-rltut/tr
 
 If you run into any issues, or have some feedback, feel free to email me at:
 nwforrer AT gmail.com.
+
+Continue to the [next tutorial](/posts/roguelike-tutorial-part1).
