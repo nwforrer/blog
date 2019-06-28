@@ -234,3 +234,5 @@ changed in the future to add some more structure, but works for now.
 That's going to be it for this tutorial. You can find the current state of the
 code on [Github](https://github.com/nwforrer/cl-rltut/tree/part-1). The list of changes since the previous tutorial can be found at
 <https://github.com/nwforrer/cl-rltut/compare/part-0...part-1>.
+
+Continue to the [part 2](/posts/roguelike-tutorial-part2).
