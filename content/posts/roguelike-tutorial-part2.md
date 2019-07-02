@@ -320,3 +320,5 @@ the dungeon map!
 You can find the current state of the code on [Github](https://github.com/nwforrer/cl-rltut/tree/part-2). The list of changes since
 the previous tutorial can be found at
 <https://github.com/nwforrer/cl-rltut/compare/part-1...part-2>.
+
+Continue to the [part 3](/posts/roguelike-tutorial-part3).
