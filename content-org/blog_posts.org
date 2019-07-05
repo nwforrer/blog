@@ -957,3 +957,43 @@ That's all there is to it. It's a pretty simple algorithm, but gives decent resu
 You can find the current state of the code on [[https://github.com/nwforrer/cl-rltut/tree/part-3][Github]]. The list of changes since
 the previous tutorial can be found at
 [[https://github.com/nwforrer/cl-rltut/compare/part-2...part-3]].
+** TODO Roguelike tutorial for Common Lisp - Part 4 - Field of view :roguelike::gamedev:lisp:tutorial:
+:PROPERTIES:
+:EXPORT_FILE_NAME: roguelike-tutorial-part4
+:END:
+** TODO Roguelike tutorial for Common Lisp - Part 5 - Placing enemies :roguelike::gamedev:lisp:tutorial:
+:PROPERTIES:
+:EXPORT_FILE_NAME: roguelike-tutorial-part5
+:END:
+** TODO Roguelike tutorial for Common Lisp - Part 6 - Combat :roguelike::gamedev:lisp:tutorial:
+:PROPERTIES:
+:EXPORT_FILE_NAME: roguelike-tutorial-part6
+:END:
+** TODO Roguelike tutorial for Common Lisp - Part 7 - Creating the interface :roguelike::gamedev:lisp:tutorial:
+:PROPERTIES:
+:EXPORT_FILE_NAME: roguelike-tutorial-part7
+:END:
+** TODO Roguelike tutorial for Common Lisp - Part 8 - Items and inventory :roguelike::gamedev:lisp:tutorial:
+:PROPERTIES:
+:EXPORT_FILE_NAME: roguelike-tutorial-part8
+:END:
+** TODO Roguelike tutorial for Common Lisp - Part 9 - Ranged scrolls and targeting :roguelike::gamedev:lisp:tutorial:
+:PROPERTIES:
+:EXPORT_FILE_NAME: roguelike-tutorial-part9
+:END:
+** TODO Roguelike tutorial for Common Lisp - Part 10 - Saving and loading :roguelike::gamedev:lisp:tutorial:
+:PROPERTIES:
+:EXPORT_FILE_NAME: roguelike-tutorial-part10
+:END:
+** TODO Roguelike tutorial for Common Lisp - Part 11 - Multiple dungeon floors :roguelike::gamedev:lisp:tutorial:
+:PROPERTIES:
+:EXPORT_FILE_NAME: roguelike-tutorial-part11
+:END:
+** TODO Roguelike tutorial for Common Lisp - Part 12 - Increasing the difficulty :roguelike::gamedev:lisp:tutorial:
+:PROPERTIES:
+:EXPORT_FILE_NAME: roguelike-tutorial-part12
+:END:
+** TODO Roguelike tutorial for Common Lisp - Part 13 - Gearing up :roguelike::gamedev:lisp:tutorial:
+:PROPERTIES:
+:EXPORT_FILE_NAME: roguelike-tutorial-part13
+:END:
