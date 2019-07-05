@@ -42,7 +42,7 @@ and enjoyable.
 
 ## Project setup {#project-setup}
 
-Once you have everything installed that you need, you can get the your project
+Once you have everything installed that you need, you can get the project
 skeleton created, with the needed dependencies. Since you have Quicklisp
 installed, it will be easy to generate a project skeleton using [Quickproject](https://www.xach.com/lisp/quickproject/).
 
