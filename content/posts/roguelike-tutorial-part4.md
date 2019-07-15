@@ -231,9 +231,8 @@ only want to draw entities that the player can see:
          (blt:cell-char x y) char))))
 ```
 
-Now if you run the game, you should see something like this (after exploring a
-couple rooms):
-![](/cl-rltut/fov-exploration.png)
+Now if you run the game, you should see something like this:
+![](/cl-rltut/dungeon-exploration.gif)
 
 
 ## Conclusion {#conclusion}
