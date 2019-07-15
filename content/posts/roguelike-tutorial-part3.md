@@ -341,8 +341,13 @@ Note that since it's randomly generated, your output won't look exactly the same
 
 ## Conclusion {#conclusion}
 
-That's all there is to it. It's a pretty simple algorithm, but gives decent results.
+That's all there is to it. It's a pretty simple algorithm, but gives decent
+results. There are plenty of other algorithms to generate different looking
+dungeons. For example, you can use a type of [maze algorithm](http://journal.stuffwithstuff.com/2014/12/21/rooms-and-mazes/) to make the tunnels
+between rooms more interesting.
 
 You can find the current state of the code on [Github](https://github.com/nwforrer/cl-rltut/tree/part-3). The list of changes since
 the previous tutorial can be found at
 <https://github.com/nwforrer/cl-rltut/compare/part-2...part-3>.
+
+Continue to the [part 4](/posts/roguelike-tutorial-part4).
