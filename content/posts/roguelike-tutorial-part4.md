@@ -240,6 +240,8 @@ Now if you run the game, you should see something like this:
 That's all there is to it. If you're interested in other more efficient
 algorithms, I'd recommend checking out the [FOV section on RogueBasin](http://www.roguebasin.com/index.php?title=Category:FOV).
 
-You can find the current state of the code on [Github](https://github.com/nwforrer/cl-rltut/tree/part-3). The list of changes since
+You can find the current state of the code on [Github](https://github.com/nwforrer/cl-rltut/tree/part-4). The list of changes since
 the previous tutorial can be found at
 <https://github.com/nwforrer/cl-rltut/compare/part-3...part-4>.
+
+Continue to [part 5](/posts/roguelike-tutorial-part5).
