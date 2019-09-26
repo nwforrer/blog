@@ -9,7 +9,7 @@
 :EXPORT_DATE: 2019-06-23
 :END:
 Testing the site
-* Tutorials :@tutorials:
+* Roguelike Tutorials                        :@tutorials:@roguelike_tutorial:
 ** DONE Roguelike tutorial for Common Lisp - Part 0 - Setup :roguelike:gamedev:lisp:tutorial:
 CLOSED: [2019-06-23 Sun 10:24]
 :PROPERTIES:
@@ -109,8 +109,8 @@ the tutorial! To see what the project should look like at this point, you can
 find the current state for Part 0 here: https://github.com/nwforrer/cl-rltut/tree/part-0.
 
 *** Questions and Feedback
-If you run into any issues, or have some feedback, feel free to email me at:
-nwforrer AT gmail.com.
+If you run into any issues, or have some feedback, please open an issue on this
+blogs [[https://github.com/nwforrer/blog/issues][GitHub repository]].
 
 Continue to the [[/posts/roguelike-tutorial-part1][next tutorial]].
 
@@ -338,8 +338,11 @@ That's going to be it for this tutorial. You can find the current state of the
 code on [[https://github.com/nwforrer/cl-rltut/tree/part-1][Github]]. The list of changes since the previous tutorial can be found at
 https://github.com/nwforrer/cl-rltut/compare/part-0...part-1.
 
+If you run into any issues, or have some feedback, please open an issue on this
+blogs [[https://github.com/nwforrer/blog/issues][GitHub repository]].
+
 Continue to the [[/posts/roguelike-tutorial-part2][part 2]].
-** DONE Roguelike tutorial for Common Lisp - Part 2 - Generic entity and map :roguelike::gamedev:lisp:tutorial:
+** DONE Roguelike tutorial for Common Lisp - Part 2 - Generic entity and map :roguelike:gamedev:lisp:tutorial:
 CLOSED: [2019-06-27 Thu 21:53]
 :PROPERTIES:
 :EXPORT_FILE_NAME: roguelike-tutorial-part2
@@ -635,8 +638,11 @@ You can find the current state of the code on [[https://github.com/nwforrer/cl-r
 the previous tutorial can be found at
 https://github.com/nwforrer/cl-rltut/compare/part-1...part-2.
 
+If you run into any issues, or have some feedback, please open an issue on this
+blogs [[https://github.com/nwforrer/blog/issues][GitHub repository]].
+
 Continue to the [[/posts/roguelike-tutorial-part3][part 3]].
-** DONE Roguelike tutorial for Common Lisp - Part 3 - Generating a dungeon :roguelike::gamedev:lisp:tutorial:
+** DONE Roguelike tutorial for Common Lisp - Part 3 - Generating a dungeon :roguelike:gamedev:lisp:tutorial:
 CLOSED: [2019-07-05 Fri 17:05]
 :PROPERTIES:
 :EXPORT_FILE_NAME: roguelike-tutorial-part3
@@ -961,8 +967,11 @@ You can find the current state of the code on [[https://github.com/nwforrer/cl-r
 the previous tutorial can be found at
 [[https://github.com/nwforrer/cl-rltut/compare/part-2...part-3]].
 
+If you run into any issues, or have some feedback, please open an issue on this
+blogs [[https://github.com/nwforrer/blog/issues][GitHub repository]].
+
 Continue to [[/posts/roguelike-tutorial-part4][part 4]].
-** DONE Roguelike tutorial for Common Lisp - Part 4 - Field of view :roguelike::gamedev:lisp:tutorial:
+** DONE Roguelike tutorial for Common Lisp - Part 4 - Field of view :roguelike:gamedev:lisp:tutorial:
 CLOSED: [2019-07-14 Sun 22:43]
 :PROPERTIES:
 :EXPORT_FILE_NAME: roguelike-tutorial-part4
@@ -1187,8 +1196,11 @@ You can find the current state of the code on [[https://github.com/nwforrer/cl-r
 the previous tutorial can be found at
 [[https://github.com/nwforrer/cl-rltut/compare/part-3...part-4]].
 
+If you run into any issues, or have some feedback, please open an issue on this
+blogs [[https://github.com/nwforrer/blog/issues][GitHub repository]].
+
 Continue to [[/posts/roguelike-tutorial-part5][part 5]].
-** DONE Roguelike tutorial for Common Lisp - Part 5 - Placing enemies :roguelike::gamedev:lisp:tutorial:
+** DONE Roguelike tutorial for Common Lisp - Part 5 - Placing enemies :roguelike:gamedev:lisp:tutorial:
 CLOSED: [2019-07-15 Mon 23:19]
 :PROPERTIES:
 :EXPORT_FILE_NAME: roguelike-tutorial-part5
@@ -1409,35 +1421,52 @@ system, now that we have enemies to attack.
 You can find the current state of the code on [[https://github.com/nwforrer/cl-rltut/tree/part-5][Github]]. The list of changes since
 the previous tutorial can be found at
 [[https://github.com/nwforrer/cl-rltut/compare/part-4...part-5]].
-** TODO Roguelike tutorial for Common Lisp - Part 6 - Combat :roguelike::gamedev:lisp:tutorial:
+
+If you run into any issues, or have some feedback, please open an issue on this
+blogs [[https://github.com/nwforrer/blog/issues][GitHub repository]].
+** TODO Roguelike tutorial for Common Lisp - Part 6 - Combat :roguelike:gamedev:lisp:tutorial:
 :PROPERTIES:
 :EXPORT_FILE_NAME: roguelike-tutorial-part6
 :END:
-** TODO Roguelike tutorial for Common Lisp - Part 7 - Creating the interface :roguelike::gamedev:lisp:tutorial:
+This tutorial series is based on the [[http://rogueliketutorials.com][Python Roguelike Tutorial]]. This will be
+covering [[http://rogueliketutorials.com/tutorials/tcod/part-6/][Part 6]] of that tutorial.
+
+*** Conclusion
+That's all there is for now. In the next post we'll be focusing on creating the
+user interface so that we can display messages within the game, rather than
+printing them to the REPL.
+
+You can find the current state of the code on [[https://github.com/nwforrer/cl-rltut/tree/part-5][Github]]. The list of changes since
+the previous tutorial can be found at
+[[https://github.com/nwforrer/cl-rltut/compare/part-4...part-5]].
+
+If you run into any issues, or have some feedback, please open an issue on this
+blogs [[https://github.com/nwforrer/blog/issues][GitHub repository]].
+** TODO Roguelike tutorial for Common Lisp - Part 7 - Creating the interface :roguelike:gamedev:lisp:tutorial:
 :PROPERTIES:
 :EXPORT_FILE_NAME: roguelike-tutorial-part7
 :END:
-** TODO Roguelike tutorial for Common Lisp - Part 8 - Items and inventory :roguelike::gamedev:lisp:tutorial:
+** TODO Roguelike tutorial for Common Lisp - Part 8 - Items and inventory :roguelike:gamedev:lisp:tutorial:
 :PROPERTIES:
 :EXPORT_FILE_NAME: roguelike-tutorial-part8
 :END:
-** TODO Roguelike tutorial for Common Lisp - Part 9 - Ranged scrolls and targeting :roguelike::gamedev:lisp:tutorial:
+** TODO Roguelike tutorial for Common Lisp - Part 9 - Ranged scrolls and targeting :roguelike:gamedev:lisp:tutorial:
 :PROPERTIES:
 :EXPORT_FILE_NAME: roguelike-tutorial-part9
 :END:
-** TODO Roguelike tutorial for Common Lisp - Part 10 - Saving and loading :roguelike::gamedev:lisp:tutorial:
+** TODO Roguelike tutorial for Common Lisp - Part 10 - Saving and loading :roguelike:gamedev:lisp:tutorial:
 :PROPERTIES:
 :EXPORT_FILE_NAME: roguelike-tutorial-part10
 :END:
-** TODO Roguelike tutorial for Common Lisp - Part 11 - Multiple dungeon floors :roguelike::gamedev:lisp:tutorial:
+** TODO Roguelike tutorial for Common Lisp - Part 11 - Multiple dungeon floors :roguelike:gamedev:lisp:tutorial:
 :PROPERTIES:
 :EXPORT_FILE_NAME: roguelike-tutorial-part11
 :END:
-** TODO Roguelike tutorial for Common Lisp - Part 12 - Increasing the difficulty :roguelike::gamedev:lisp:tutorial:
+** TODO Roguelike tutorial for Common Lisp - Part 12 - Increasing the difficulty :roguelike:gamedev:lisp:tutorial:
 :PROPERTIES:
 :EXPORT_FILE_NAME: roguelike-tutorial-part12
 :END:
-** TODO Roguelike tutorial for Common Lisp - Part 13 - Gearing up :roguelike::gamedev:lisp:tutorial:
+** TODO Roguelike tutorial for Common Lisp - Part 13 - Gearing up :roguelike:gamedev:lisp:tutorial:
 :PROPERTIES:
 :EXPORT_FILE_NAME: roguelike-tutorial-part13
 :END:

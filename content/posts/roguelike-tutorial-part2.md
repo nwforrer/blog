@@ -3,7 +3,7 @@ title = "Roguelike tutorial for Common Lisp - Part 2 - Generic entity and map"
 author = ["Nick Forrer"]
 date = 2019-06-27T21:53:00-04:00
 tags = ["roguelike", "gamedev", "lisp", "tutorial"]
-categories = ["tutorials"]
+categories = ["tutorials", "roguelike-tutorial"]
 draft = false
 +++
 
@@ -320,5 +320,8 @@ the dungeon map!
 You can find the current state of the code on [Github](https://github.com/nwforrer/cl-rltut/tree/part-2). The list of changes since
 the previous tutorial can be found at
 <https://github.com/nwforrer/cl-rltut/compare/part-1...part-2>.
+
+If you run into any issues, or have some feedback, please open an issue on this
+blogs [GitHub repository](https://github.com/nwforrer/blog/issues).
 
 Continue to the [part 3](/posts/roguelike-tutorial-part3).

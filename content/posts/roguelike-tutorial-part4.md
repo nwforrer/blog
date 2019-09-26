@@ -3,7 +3,7 @@ title = "Roguelike tutorial for Common Lisp - Part 4 - Field of view"
 author = ["Nick Forrer"]
 date = 2019-07-14T22:43:00-04:00
 tags = ["roguelike", "gamedev", "lisp", "tutorial"]
-categories = ["tutorials"]
+categories = ["tutorials", "roguelike-tutorial"]
 draft = false
 +++
 
@@ -243,5 +243,8 @@ algorithms, I'd recommend checking out the [FOV section on RogueBasin](http://ww
 You can find the current state of the code on [Github](https://github.com/nwforrer/cl-rltut/tree/part-4). The list of changes since
 the previous tutorial can be found at
 <https://github.com/nwforrer/cl-rltut/compare/part-3...part-4>.
+
+If you run into any issues, or have some feedback, please open an issue on this
+blogs [GitHub repository](https://github.com/nwforrer/blog/issues).
 
 Continue to [part 5](/posts/roguelike-tutorial-part5).

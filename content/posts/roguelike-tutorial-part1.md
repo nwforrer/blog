@@ -3,7 +3,7 @@ title = "Roguelike tutorial for Common Lisp - Part 1 - Drawing the player"
 author = ["Nick Forrer"]
 date = 2019-06-25T20:10:00-04:00
 tags = ["roguelike", "gamedev", "lisp", "tutorial"]
-categories = ["tutorials"]
+categories = ["tutorials", "roguelike-tutorial"]
 draft = false
 +++
 
@@ -234,5 +234,8 @@ changed in the future to add some more structure, but works for now.
 That's going to be it for this tutorial. You can find the current state of the
 code on [Github](https://github.com/nwforrer/cl-rltut/tree/part-1). The list of changes since the previous tutorial can be found at
 <https://github.com/nwforrer/cl-rltut/compare/part-0...part-1>.
+
+If you run into any issues, or have some feedback, please open an issue on this
+blogs [GitHub repository](https://github.com/nwforrer/blog/issues).
 
 Continue to the [part 2](/posts/roguelike-tutorial-part2).

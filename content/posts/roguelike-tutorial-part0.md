@@ -3,7 +3,7 @@ title = "Roguelike tutorial for Common Lisp - Part 0 - Setup"
 author = ["Nick Forrer"]
 date = 2019-06-23T10:24:00-04:00
 tags = ["roguelike", "gamedev", "lisp", "tutorial"]
-categories = ["tutorials"]
+categories = ["tutorials", "roguelike-tutorial"]
 draft = false
 +++
 
@@ -112,7 +112,7 @@ find the current state for Part 0 here: <https://github.com/nwforrer/cl-rltut/tr
 
 ## Questions and Feedback {#questions-and-feedback}
 
-If you run into any issues, or have some feedback, feel free to email me at:
-nwforrer AT gmail.com.
+If you run into any issues, or have some feedback, please open an issue on this
+blogs [GitHub repository](https://github.com/nwforrer/blog/issues).
 
 Continue to the [next tutorial](/posts/roguelike-tutorial-part1).
