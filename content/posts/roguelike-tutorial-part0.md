@@ -90,6 +90,16 @@ archive and find the shared library dependency. For the Linux archive, this will
 be Linux64/libBearLibTerminal.so (assuming you are using a 64-bit OS). This file
 should be placed in a "lib" directory in the root of your project.
 
+NOTE: Windows users may need to add the following to their package.lisp file, to
+ensure the bearlibterminal library is found:
+
+```lisp
+(cffi:define-foreign-library blt:bearlibterminal
+  (t "lib/BearLibTerminal.dll"))
+
+(cffi:use-foreign-library blt:bearlibterminal)
+```
+
 To make it easier to load your project from the REPL, you can create a symlink
 in the local-projects directly that points to your project, so that Quicklisp
 can always find it (use the correct path to your project instead of ~/src/lisp/cl-rltut):
@@ -112,7 +122,7 @@ find the current state for Part 0 here: <https://github.com/nwforrer/cl-rltut/tr
 
 ## Questions and Feedback {#questions-and-feedback}
 
-If you run into any issues, or have some feedback, please open an issue on this
+If you run into any issues, or have questions/feedback, please open an issue on this
 blogs [GitHub repository](https://github.com/nwforrer/blog/issues).
 
 Continue to the [next tutorial](/posts/roguelike-tutorial-part1).
