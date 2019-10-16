@@ -1,9 +1,10 @@
 +++
 title = "Roguelike tutorial for Common Lisp - Part 6 - Combat"
 author = ["Nick Forrer"]
+date = 2019-10-16T06:55:00-04:00
 tags = ["roguelike", "gamedev", "lisp", "tutorial"]
 categories = ["tutorials", "roguelike-tutorial"]
-draft = true
+draft = false
 +++
 
 This tutorial series is based on the [Python Roguelike Tutorial](http://rogueliketutorials.com). This will be
@@ -479,12 +480,345 @@ And the placeholder in components.lisp `take-turn`:
              (attack (entity/fighter monster) target))))))
 {{< /highlight >}}
 
+Now if you run the game, you'll be able to attack enemies, and they will attack
+you.
+
+
+## Messages, Death, and Corpses {#messages-death-and-corpses}
+
+Before moving on, we need to come up with a better way to handle the messages
+we're printing. In the next tutorial, we'll be displaying these messages to the
+player in game, rather than just printing them to the console. Instead of
+requiring the `take-damage` and `attack` functions to be in charge of displaying
+those messages, it'd be better for them to just return the results of the
+actions, and have the message display handled elsewhere. So, we'll modify
+`take-damage` and `attack` to return a property list of the results:
+
+{{< highlight lisp "linenos=table, linenostart=1, hl_lines=3-6 9 13-17 20-22" >}}
+(defmethod take-damage ((component fighter) amount)
+  (decf (fighter/hp component) amount)
+  (let ((results nil))
+    (when (<= (fighter/hp component) 0)
+      (setf results (list :dead (component/owner component))))
+    results))
+
+(defmethod attack ((component fighter) (target entity))
+  (let ((results nil)
+        (damage (- (fighter/power component) (fighter/defense (entity/fighter target)))))
+    (cond
+      ((> damage 0)
+       (setf results (append (list :message
+                                   (format nil "~A attacks ~A for ~A hit points.~%"
+                                           (entity/name (component/owner component))
+                                           (entity/name target)
+                                           damage))
+                             (take-damage (entity/fighter target) damage))))
+      (t
+       (setf results (list :message (format nil "~A attacks ~A but does no damage.~%"
+                                            (entity/name (component/owner component))
+                                            (entity/name target))))))))
+{{< /highlight >}}
+
+Since the `attack` function is called within the `take-turn` method on the
+`component` class, we'll want to update that to return the results it receives
+from `attack`:
+
+{{< highlight lisp "linenos=table, linenostart=1, hl_lines=2 9-10" >}}
+(defmethod take-turn ((component basic-monster) target map entities)
+  (let* ((results nil)
+         (monster (component/owner component))
+         (in-sight (tile/visible (aref (game-map/tiles map) (entity/x monster) (entity/y monster)))))
+    (when in-sight
+      (cond ((>= (distance-to monster target) 2)
+             (move-towards monster (entity/x target) (entity/y target) map entities))
+            ((> (fighter/hp (entity/fighter monster)) 0)
+             (setf results (attack (entity/fighter monster) target)))))
+    results))
+{{< /highlight >}}
+
+Now we need to update the game loop to use the results:
+
+{{< highlight lisp "linenos=table, linenostart=1, hl_lines=4 14 22-28 32-39" >}}
+(defun game-tick (player entities map game-state)
+  (declare (type game-state game-state))
+  (render-all entities player map *screen-width* *screen-height*)
+  (let* ((player-turn-results nil)
+         (action (handle-keys))
+         (move (getf action :move))
+         (exit (getf action :quit)))
+    (when (and move (eql (game-state/state game-state) :player-turn))
+      (let ((destination-x (+ (entity/x player) (car move)))
+            (destination-y (+ (entity/y player) (cdr move))))
+        (unless (blocked-p map destination-x destination-y)
+          (let ((target (blocking-entity-at entities destination-x destination-y)))
+            (cond (target
+                   (setf player-turn-results (attack (entity/fighter player) target)))
+                  (t
+                   (move player (car move) (cdr move))
+                   (fov map (entity/x player) (entity/y player)))))
+          (setf (game-state/state game-state) :enemy-turn))))
+    (when exit
+      (setf (game-state/running game-state) nil))
+
+    (let ((message (getf player-turn-results :message))
+          (dead-entity (getf player-turn-results :dead)))
+      (when message
+        (format t message))
+      (when dead-entity
+        ;; we'll get to this next
+        ))
+
+    (when (eql (game-state/state game-state) :enemy-turn)
+      (dolist (entity (remove-if-not #'entity/ai entities))
+        (let* ((enemy-turn-results (take-turn (entity/ai entity) player map entities))
+               (message (getf enemy-turn-results :message))
+               (dead-entity (getf enemy-turn-results :dead)))
+          (when message
+            (format t message))
+          (when dead-entity
+            ;; we'll get to this next
+            )))
+      (setf (game-state/state game-state) :player-turn)))
+
+  game-state)
+{{< /highlight >}}
+
+With that out of the way, we can work on handling the death of players and
+monsters. Create a new file `death-functions.lisp`, with the `kill-player` and
+`kill-monster` functions:
+
+```lisp
+(in-package #:cl-rltut)
+
+(defun kill-player (player)
+  (setf (entity/char player) #\%
+        (entity/color player) (blt:red))
+
+  (values "You died!" :player-dead))
+
+(defun kill-monster (monster)
+  (with-slots (char color blocks ai name) monster
+    (let ((message (format nil "~A is dead!~%" name)))
+      (setf char #\%
+            color (blt:red)
+            blocks nil
+            ai nil
+            name (format nil "remains of ~A" name))
+      message)))
+```
+
+Now update the placeholders in cl-rltut.lisp to call these functions. When the
+player is killed, we set the game state to :player-dead and break out of
+`game-tick=`. The game will continue to run, and the `game-tick` function will
+continue to be called, but with that game-state no enemy turns or player turn
+will happen. The only option will be to quit the game.
+
+{{< highlight lisp "linenos=table, linenostart=1, hl_lines=6-11 21-29" >}}
+(let ((message (getf player-turn-results :message))
+      (dead-entity (getf player-turn-results :dead)))
+  (when message
+    (format t message))
+  (when dead-entity
+    (cond ((equal dead-entity player)
+           (setf (values message (game-state/state game-state))
+                 (kill-player dead-entity)))
+          (t
+           (setf message (kill-monster dead-entity))))
+    ((format t "~&  ~%") t message)))
+
+(when (eql (game-state/state game-state) :enemy-turn)
+  (dolist (entity (remove-if-not #'entity/ai entities))
+    (let* ((enemy-turn-results (take-turn (entity/ai entity) player map entities))
+           (message (getf enemy-turn-results :message))
+           (dead-entity (getf enemy-turn-results :dead)))
+      (when message
+        (format t message))
+      (when dead-entity
+        (cond ((equal dead-entity player)
+               (setf (values message (game-state/state game-state))
+                     (kill-player dead-entity)))
+              (t
+               (setf message (kill-monster dead-entity))))
+        ((format t "~&  ~%") t message)
+
+        (when (eql (game-state/state game-state) :player-dead)
+          (return-from game-tick game-state)))))
+  (setf (game-state/state game-state) :player-turn))
+{{< /highlight >}}
+
+Now if you run the game, you can kill enemies and they will turn into corpses.
+If you die, you will no longer be able to move and must exit the game.
+![](/cl-rltut/enemy-corpses.png)
+
+
+## Displaying Player Health {#displaying-player-health}
+
+One problem with the combat system is the player has no way of knowing how much
+health they have remaining. So we'll display the player's health in the game.
+Update the render-all function to accept the player as a parameter, and display
+their health:
+
+{{< highlight lisp "linenos=table, linenostart=1, hl_lines=1 22-24" >}}
+(defun render-all (entities player map screen-width screen-height)
+  (declare (ignore screen-width))
+  (blt:clear)
+  (dotimes (y *map-height*)
+    (dotimes (x *map-width*)
+      (let* ((tile (aref (game-map/tiles map) x y))
+             (wall (tile/block-sight tile))
+             (visible (tile/visible tile))
+             (explored (tile/explored tile)))
+        (cond (visible
+               (if wall
+                   (setf (blt:background-color) (getf *color-map* :light-wall))
+                   (setf (blt:background-color) (getf *color-map* :light-ground)))
+               (setf (blt:cell-char x y) #\Space))
+              (explored
+               (if wall
+                   (setf (blt:background-color) (getf *color-map* :dark-wall))
+                   (setf (blt:background-color) (getf *color-map* :dark-ground)))
+               (setf (blt:cell-char x y) #\Space))))))
+  (setf (blt:background-color) (blt:black)
+        (blt:color) (blt:white))
+  (blt:print 1 (1- screen-height) (format nil "HP: ~2d/~2d"
+                                          (fighter/hp (entity/fighter player))
+                                          (fighter/max-hp (entity/fighter player))))
+
+  (blt:refresh))
+{{< /highlight >}}
+
+If you run the game now, you should see the players health and maximum health
+displayed in the lower left corner of the screen:
+![](/cl-rltut/player-health-display.png)
+
+
+## Rendering Order {#rendering-order}
+
+One issue we have now is when you walk over a corpse, the corpse is rendered on
+top of the player. The last thing we'll do in this post is fix that. Let's start
+by creating a new file called `rendering.lisp` and moving the `render-all`
+function there. Then, define a variable to hold a property list with the order
+to render entities (we'll only use `:corpse` and `:actor` now until we add items):
+
+```lisp
+(defparameter *render-order*
+  '(:corpse 1
+    :item 2
+    :actor 3))
+```
+
+Then, we'll need to store the render-order on the `entity` class. We'll default
+it to corpse if it's not supplied when creating an `entity` instance:
+
+{{< highlight lisp "linenos=table, linenostart=1, hl_lines=8" >}}
+(defclass entity ()
+  ((name :initarg :name :accessor entity/name)
+   (x :initarg :x :accessor entity/x)
+   (y :initarg :y :accessor entity/y)
+   (char :initarg :char :accessor entity/char)
+   (color :initarg :color :accessor entity/color)
+   (blocks :initarg :blocks :accessor entity/blocks)
+   (render-order :initarg :render-order :accessor entity/render-order :initform :corpse)
+   (fighter :initarg :fighter :accessor entity/fighter :initform nil)
+   (ai :initarg :ai :accessor entity/ai :initform nil)))
+{{< /highlight >}}
+
+Now, update all the places that an `entity` is initialized, to pass in the
+render order. In `cl-rltut.lisp` `main` function, for the player:
+
+{{< highlight lisp "linenos=table, linenostart=1, hl_lines=8" >}}
+(player (make-instance 'entity
+                       :name "Player"
+                       :x (/ *screen-width* 2)
+                       :y (/ *screen-height* 2)
+                       :char #\@
+                       :color (blt:white)
+                       :blocks t
+                       :render-order :actor
+                       :fighter fighter-component))
+{{< /highlight >}}
+
+And in the `place-entities` function in `game-map.lisp`, for each monster:
+
+{{< highlight lisp "linenos=table, linenostart=1, hl_lines=5 12" >}}
+(cond ((< (random 100) 80)
+       (let* ((fighter-component (make-instance 'fighter :hp 10 :defense 0 :power 3))
+              (ai-component (make-instance 'basic-monster))
+              (orc (make-instance 'entity :name "Orc" :x x :y y :color (blt:green) :char #\o :blocks t
+                                          :render-order :actor
+                                          :fighter fighter-component :ai ai-component)))
+         (nconc entities (list orc))))
+      (t
+       (let* ((fighter-component (make-instance 'fighter :hp 16 :defense 1 :power 4))
+              (ai-component (make-instance 'basic-monster))
+              (troll (make-instance 'entity :name "Troll" :x x :y y :color (blt:yellow) :char #\T :blocks t
+                                            :render-order :actor
+                                            :fighter fighter-component :ai ai-component)))
+         (nconc entities (list troll)))))
+{{< /highlight >}}
+
+We'll also need to change an entities render order to `:corpse` when they die.
+In the `kill-monster` function in `death-functions.lisp`:
+
+{{< highlight lisp "linenos=table, linenostart=1, hl_lines=2 9" >}}
+(defun kill-monster (monster)
+  (with-slots (char color blocks ai name render-order) monster
+    (let ((message (format nil "~A is dead!~%" name)))
+      (setf char #\%
+            color (blt:red)
+            blocks nil
+            ai nil
+            name (format nil "remains of ~A" name)
+            render-order :corpse)
+      message)))
+{{< /highlight >}}
+
+Finally, we need to sort the entities by their render order before rendering
+them. In `rendering.lisp` update the `render-all` function to sort the entities:
+
+{{< highlight lisp "linenos=table, linenostart=1, hl_lines=1-3 24-25" >}}
+(defun render-order-compare (entity-1 entity-2)
+  (< (getf *render-order* (entity/render-order entity-1))
+     (getf *render-order* (entity/render-order entity-2))))
+
+(defun render-all (entities player map screen-width screen-height)
+  (declare (ignore screen-width))
+  (blt:clear)
+  (dotimes (y *map-height*)
+    (dotimes (x *map-width*)
+      (let* ((tile (aref (game-map/tiles map) x y))
+             (wall (tile/block-sight tile))
+             (visible (tile/visible tile))
+             (explored (tile/explored tile)))
+        (cond (visible
+               (if wall
+                   (setf (blt:background-color) (getf *color-map* :light-wall))
+                   (setf (blt:background-color) (getf *color-map* :light-ground)))
+               (setf (blt:cell-char x y) #\Space))
+              (explored
+               (if wall
+                   (setf (blt:background-color) (getf *color-map* :dark-wall))
+                   (setf (blt:background-color) (getf *color-map* :dark-ground)))
+               (setf (blt:cell-char x y) #\Space))))))
+  (mapc #'(lambda (entity) (draw entity (game-map/tiles map)))
+        (sort entities #'render-order-compare))
+  (setf (blt:background-color) (blt:black)
+        (blt:color) (blt:white))
+  (blt:print 1 (1- screen-height) (format nil "HP: ~2d/~2d"
+                                          (fighter/hp (entity/fighter player))
+                                          (fighter/max-hp (entity/fighter player))))
+
+  (blt:refresh))
+{{< /highlight >}}
+
+Now when you run the game and walk over a corpse, the player will be rendered on top.
+
 
 ## Conclusion {#conclusion}
 
-That's all there is for now. In the next post we'll be focusing on creating the
-user interface so that we can display messages within the game, rather than
-printing them to the REPL.
+That was a long post, but there is now a working combat system. In the next post
+we'll be focusing on creating the user interface so that we can display messages
+within the game, rather than printing them to the REPL.
 
 You can find the current state of the code on [Github](https://github.com/nwforrer/cl-rltut/tree/part-6). The list of changes since
 the previous tutorial can be found at
