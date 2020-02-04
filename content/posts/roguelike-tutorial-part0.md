@@ -81,7 +81,10 @@ git clone https://github.com/sjl/cl-blt.git ~/quicklisp/local-projects/cl-blt
 ```
 
 That will clone the cl-blt Git repo into a directory that Quicklisp will look at
-when trying to load an ASDF system.
+when trying to load an ASDF system. For reference, the latest commit on the
+cl-blt repository is \`ee69ac7bfb473e9cdd8c2d50d45ef288ef315ff3\` at the time of
+writing. If you want to guarantee you're using the same version as I am, just
+make sure you checkout that commit.
 
 In addition to the Common Lisp bindings, you will also need the BearLibTerminal
 library itself. Download the appropriate binary for your system from
