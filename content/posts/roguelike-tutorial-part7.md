@@ -371,22 +371,26 @@ name in the list.
 
 ```lisp
 (defun get-names-under-mouse (x y entities map)
-  (let ((names nil)
-        (in-fov (tile/visible (aref (game-map/tiles map) x y))))
-    (when in-fov
-      (dolist (entity entities)
-        (when (and (= (entity/x entity) x)
-                   (= (entity/y entity) y))
-          (setf names (append names (list (entity/name entity)))))))
-    (format nil "~{~A~^, ~}" names)))
+  (when (and (< y (game-map/h map))
+             (< x (game-map/w map)))
+    (let ((names nil)
+          (in-fov (tile/visible (aref (game-map/tiles map) x y))))
+      (when in-fov
+        (dolist (entity entities)
+          (when (and (= (entity/x entity) x)
+                     (= (entity/y entity) y))
+            (setf names (append names (list (entity/name entity)))))))
+      (format nil "~{~A~^, ~}" names))))
 ```
 
 Finally, update the "render-all" function to call this method, and render the
 names to the screen.
 
 ```lisp
-(setf (blt:color) (blt:yellow))
-(blt:print (1+ (panel/x stats-panel)) (1+ (panel/y stats-panel)) (get-names-under-mouse (blt:mouse-x) (blt:mouse-y) entities map))
+(let ((entity-names (get-names-under-mouse (blt:mouse-x) (blt:mouse-y) entities map)))
+(when entity-names
+    (setf (blt:color) (blt:yellow))
+    (blt:print (1+ (panel/x stats-panel)) (1+ (panel/y stats-panel)) entity-names)))
 ```
 
 Now when you run the game and hover your mouse over an entity, it will display
@@ -401,7 +405,7 @@ look at, and more informative.
 
 You can find the current state of the code on [Github](https://github.com/nwforrer/cl-rltut/tree/part-6). The list of changes since
 the previous tutorial can be found at
-<https://github.com/nwforrer/cl-rltut/compare/part-6...part-7>.
+<https://github.com/nwforrer/cl-rltut/compare/part-6...part-7-1>.
 
 If you run into any issues, or have questions/feedback, please open an issue on this
 blogs [GitHub repository](https://github.com/nwforrer/blog/issues).

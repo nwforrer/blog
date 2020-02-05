@@ -2565,21 +2565,25 @@ names, and the "^" descriptor to only include the comma when it's not the last
 name in the list.
 #+BEGIN_SRC lisp
 (defun get-names-under-mouse (x y entities map)
-  (let ((names nil)
-        (in-fov (tile/visible (aref (game-map/tiles map) x y))))
-    (when in-fov
-      (dolist (entity entities)
-        (when (and (= (entity/x entity) x)
-                   (= (entity/y entity) y))
-          (setf names (append names (list (entity/name entity)))))))
-    (format nil "~{~A~^, ~}" names)))
+  (when (and (< y (game-map/h map))
+             (< x (game-map/w map)))
+    (let ((names nil)
+          (in-fov (tile/visible (aref (game-map/tiles map) x y))))
+      (when in-fov
+        (dolist (entity entities)
+          (when (and (= (entity/x entity) x)
+                     (= (entity/y entity) y))
+            (setf names (append names (list (entity/name entity)))))))
+      (format nil "~{~A~^, ~}" names))))
 #+END_SRC
 
 Finally, update the "render-all" function to call this method, and render the
 names to the screen.
 #+BEGIN_SRC lisp
-(setf (blt:color) (blt:yellow))
-(blt:print (1+ (panel/x stats-panel)) (1+ (panel/y stats-panel)) (get-names-under-mouse (blt:mouse-x) (blt:mouse-y) entities map))
+(let ((entity-names (get-names-under-mouse (blt:mouse-x) (blt:mouse-y) entities map)))
+(when entity-names
+    (setf (blt:color) (blt:yellow))
+    (blt:print (1+ (panel/x stats-panel)) (1+ (panel/y stats-panel)) entity-names)))
 #+END_SRC
 
 Now when you run the game and hover your mouse over an entity, it will display
@@ -2592,7 +2596,7 @@ look at, and more informative.
 
 You can find the current state of the code on [[https://github.com/nwforrer/cl-rltut/tree/part-6][Github]]. The list of changes since
 the previous tutorial can be found at
-[[https://github.com/nwforrer/cl-rltut/compare/part-6...part-7]].
+[[https://github.com/nwforrer/cl-rltut/compare/part-6...part-7-1]].
 
 If you run into any issues, or have questions/feedback, please open an issue on this
 blogs [[https://github.com/nwforrer/blog/issues][GitHub repository]].
