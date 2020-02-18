@@ -409,3 +409,5 @@ the previous tutorial can be found at
 
 If you run into any issues, or have questions/feedback, please open an issue on this
 blogs [GitHub repository](https://github.com/nwforrer/blog/issues).
+
+Continue to [part 8](/posts/roguelike-tutorial-part8).
