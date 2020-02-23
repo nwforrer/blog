@@ -86,6 +86,8 @@ Now, if you run the game, you should see some health potions placed throughout
 the map. However, you won't be able to interact with them, which is what we'll
 be working on now.
 
+{{< figure src="/cl-rltut/items.png" >}}
+
 
 ## Picking up items {#picking-up-items}
 

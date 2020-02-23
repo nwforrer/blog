@@ -2685,6 +2685,8 @@ call to "make-map" to pass the variable through.
 Now, if you run the game, you should see some health potions placed throughout
 the map. However, you won't be able to interact with them, which is what we'll
 be working on now.
+
+[[/cl-rltut/items.png]]
 *** Picking up items
 Now, we will create a way to pickup the items we've placed on the map. The first
 step will be to create an inventory to hold all of the items we pick up. In the
