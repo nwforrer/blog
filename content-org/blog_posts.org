@@ -2982,6 +2982,161 @@ through to the more generic "menu" function:
                              (inventory/items inventory)))))
     (menu header options inventory-width screen-width screen-height)))
 #+END_SRC
+
+We now need to be able to display the menu. When the player opens the inventory,
+we will have the game switch to a new "show-inventory" state. We'll need to also
+track the previous state that the game was in so that when the inventory menu is
+closed, the game returns to the correct state so that the player doesn't lose a
+turn if they just open and close the inventory without using anything. We'll use
+the 'i' key to open the inventory.
+
+Update the game-state class to hold the previous state:
+#+BEGIN_SRC lisp
+(defclass game-state ()
+  ((state :initarg :state :accessor game-state/state)
+   (previous-state :initarg :previous-state :accessor game-state/previous-state :initform nil)
+   (entities :initarg :entities :accessor game-state/entities)
+   (running :initarg :running :accessor game-state/running)))
+
+(defmethod initialize-instance :after ((game-state game-state) &rest initargs)
+  (declare (ignore initargs))
+  (with-slots (state previous-state) game-state
+    (unless previous-state
+      (setf previous-state state))))
+#+END_SRC
+
+Update the handle-keys function to check for the 'i' key:
+#+BEGIN_SRC lisp -n :hl_lines 13
+(defun handle-keys ()
+  (when (blt:has-input-p)
+    (blt:key-case (blt:read)
+                  ((or :up :k) (list :move (cons 0 -1)))
+                  ((or :down :j) (list :move (cons 0 1)))
+                  ((or :left :h) (list :move (cons -1 0)))
+                  ((or :right :l) (list :move (cons 1 0)))
+                  (:y (list :move (cons -1 -1)))
+                  (:u (list :move (cons 1 -1)))
+                  (:b (list :move (cons -1 1)))
+                  (:n (list :move (cons 1 1)))
+                  (:g (list :pickup t))
+                  (:i (list :show-inventory t))
+                  (:escape (list :quit t))
+                  (:close (list :quit t)))))
+#+END_SRC
+
+Update the player-turn function to check for the show-inventory action, change
+the state to show-inventory and store the current state:
+#+BEGIN_SRC lisp -n :hl_lines 5, 25-28
+(defun player-turn (game-state map player action)
+  (let ((player-turn-results nil)
+        (move (getf action :move))
+        (pickup (getf action :pickup))
+        (show-inventory (getf action :show-inventory)))
+    (when move
+      (let ((destination-x (+ (entity/x player) (car move)))
+            (destination-y (+ (entity/y player) (cdr move))))
+        (unless (blocked-p map destination-x destination-y)
+          (let ((target (blocking-entity-at (game-state/entities game-state) destination-x destination-y)))
+            (cond (target
+                   (setf player-turn-results (attack (entity/fighter player) target)))
+                  (t
+                   (move player (car move) (cdr move))
+                   (fov map (entity/x player) (entity/y player)))))
+          (setf (game-state/state game-state) :enemy-turn))))
+
+    (when pickup
+      (dolist (entity (game-state/entities game-state))
+        (when (and (entity/item entity)
+                   (= (entity/x entity) (entity/x player))
+                   (= (entity/y entity) (entity/y player)))
+          (setf player-turn-results (add-item (entity/inventory player) entity)))))
+
+    (when show-inventory
+      (with-slots (previous-state state) game-state
+        (setf previous-state state
+              state :show-inventory)))
+
+    (values player-turn-results game-state)))
+#+END_SRC
+
+We'll also want to update the game-tick function so that when "escape" is
+pressed and the inventory menu is open, the menu closes instead of exiting the game.
+#+BEGIN_SRC lisp -n :hl_lines 13-16
+(defun game-tick (player map game-state stats-panel log)
+  (declare (type game-state game-state))
+  (declare (type message-log log))
+  (render-all game-state player map stats-panel *screen-width* *screen-height*)
+  (let* ((player-turn-results nil)
+         (action (handle-keys game-state))
+         (inventory-index (getf action :inventory-index))
+         (exit (getf action :quit)))
+
+    (when (eql (game-state/state game-state) :player-turn)
+      (setf (values player-turn-results game-state) (player-turn game-state map player action)))
+
+    (when exit
+      (if (eql (game-state/state game-state) :show-inventory)
+          (setf (game-state/state game-state) (game-state/previous-state game-state))
+          (setf (game-state/running game-state) nil)))
+
+    (setf game-state (handle-player-results game-state player player-turn-results log))
+
+    (when (eql (game-state/state game-state) :enemy-turn)
+      (setf game-state (enemy-turn game-state player map log))
+      (when (eql (game-state/state game-state) :player-dead)
+        (return-from game-tick game-state))
+      (setf (game-state/state game-state) :player-turn)))
+
+  game-state)
+#+END_SRC
+
+Now to finally render the inventory menu, update the render-all function to take
+in the game-state as a parameter, and to render the menu when the state is
+currently set to show-inventory. Make sure to update the call to render-all to
+pass in the new game-state parameter:
+#+BEGIN_SRC lisp -n :hl_lines 1, 31-33
+(defun render-all (game-state player map stats-panel screen-width screen-height)
+  (blt:clear)
+  (dotimes (y *map-height*)
+    (dotimes (x *map-width*)
+      (let* ((tile (aref (game-map/tiles map) x y))
+             (wall (tile/block-sight tile))
+             (visible (tile/visible tile))
+             (explored (tile/explored tile)))
+        (cond (visible
+               (if wall
+                   (setf (blt:background-color) (getf *color-map* :light-wall))
+                   (setf (blt:background-color) (getf *color-map* :light-ground)))
+               (setf (blt:cell-char x y) #\Space))
+              (explored
+               (if wall
+                   (setf (blt:background-color) (getf *color-map* :dark-wall))
+                   (setf (blt:background-color) (getf *color-map* :dark-ground)))
+               (setf (blt:cell-char x y) #\Space))))))
+  (let ((entities (game-state/entities game-state)))
+    (mapc #'(lambda (entity) (draw entity (game-map/tiles map)))
+          (sort (copy-seq entities) #'render-order-compare))
+    (setf (blt:background-color) (blt:black)
+          (blt:color) (blt:white))
+    (render-panel stats-panel)
+
+    (let ((entity-names (get-names-under-mouse (blt:mouse-x) (blt:mouse-y) entities map)))
+      (when entity-names
+        (setf (blt:color) (blt:yellow))
+        (blt:print (1+ (panel/x stats-panel)) (1+ (panel/y stats-panel)) entity-names))))
+
+  (when (or (eql (game-state/state game-state) :show-inventory))
+    (let ((inventory-title "Press key next to item to use it, or Esc to cancel."))
+      (inventory-menu inventory-title (entity/inventory player) 50 screen-width screen-height)))
+
+  (blt:refresh))
+#+END_SRC
+
+Now, if you run the game, you should be able to open the inventory menu by
+pressing 'i'. If you are holding any items, they should be displayed, and you
+should be able to press the escape key to close the menu.
+
+[[/cl-rltut/inventory-menu.png]]
 *** Using items
 *** Dropping items
 *** Conclusion
