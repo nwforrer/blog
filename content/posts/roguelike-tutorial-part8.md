@@ -1,9 +1,10 @@
 +++
 title = "Roguelike tutorial for Common Lisp - Part 8 - Items and inventory"
 author = ["Nick Forrer"]
+date = 2020-02-23T12:00:00-05:00
 tags = ["roguelike", "gamedev", "lisp", "tutorial"]
 categories = ["tutorials", "roguelike-tutorial"]
-draft = true
+draft = false
 +++
 
 This tutorial series is based on the [Python Roguelike Tutorial](http://rogueliketutorials.com). This will be
@@ -565,11 +566,363 @@ should be able to press the escape key to close the menu.
 
 ## Using items {#using-items}
 
+Currently, we can open the inventory but we can't use any of the items. In order
+to use the items, we're going to need to be able to have different input
+handling functions depending on the state of the game. For example, when the
+menu is open, we would want to be able to use an item labeled with the 'j' key,
+but that key is already mapped for movement.
+
+To start, rename the current "handle-keys" function to
+"handle-player-turn-keys", then create a new "handle-keys" function which will
+call it when the game state is "players-turn". The call to the "handle-keys"
+function will also need to be modified to pass in the game state.
+
+```lisp
+(defun handle-keys (game-state)
+  (cond ((eql (game-state/state game-state) :player-turn)
+         (handle-player-turn-keys))))
+
+(defun handle-player-turn-keys ()
+  (when (blt:has-input-p)
+    (blt:key-case (blt:read)
+                  ((or :up :k) (list :move (cons 0 -1)))
+                  ((or :down :j) (list :move (cons 0 1)))
+                  ((or :left :h) (list :move (cons -1 0)))
+                  ((or :right :l) (list :move (cons 1 0)))
+                  (:y (list :move (cons -1 -1)))
+                  (:u (list :move (cons 1 -1)))
+                  (:b (list :move (cons -1 1)))
+                  (:n (list :move (cons 1 1)))
+                  (:g (list :pickup t))
+                  (:i (list :show-inventory t))
+                  (:escape (list :quit t))
+                  (:close (list :quit t)))))
+```
+
+We should also create a key handling function for when the player is dead, so
+that the player can exit the game, and also be able to see what items they had
+in their inventory.
+
+{{< highlight lisp "linenos=table, linenostart=1, hl_lines=4 5 7-11" >}}
+(defun handle-keys (game-state)
+  (cond ((eql (game-state/state game-state) :player-turn)
+         (handle-player-turn-keys))
+        ((eql (game-state/state game-state) :player-dead)
+         (handle-player-dead-keys))))
+
+(defun handle-player-dead-keys ()
+  (when (blt:has-input-p)
+    (blt:key-case (blt:read)
+                  (:i (list :show-inventory t))
+                  (:escape (list :quit t)))))
+{{< /highlight >}}
+
+Now we can create a function to handle inventory keys. If the player presses an
+alphabetic key, it should be returned so that we can check if it's to use an
+item in their inventory. To do this, we will convert the input character to a
+numeric index where 'a' is 0, 'b' is 1, etc.
+
+```lisp
+(defun handle-keys (game-state)
+  (cond ((eql (game-state/state game-state) :player-turn)
+         (handle-player-turn-keys))
+        ((eql (game-state/state game-state) :player-dead)
+         (handle-player-dead-keys))
+        ((eql (game-state/state game-state) :show-inventory)
+         (handle-inventory-keys))))
+
+(defun handle-inventory-keys ()
+  (when (blt:has-input-p)
+    (let ((key (blt:read))
+          (char-key (blt:character-input)))
+      (when char-key
+        (let ((index (- (char-code char-key) (char-code #\a))))
+          (when (>= index 0)
+            (return-from handle-inventory-keys (list :inventory-index index)))))
+      (blt:key-case key
+                    (:escape (list :quit t))))))
+```
+
+Now, in the "game-tick" function, let's handle the "inventory-index" action, and
+test that we are able to determine the item the player is trying to use by
+printing it's name.
+
+{{< highlight lisp "linenos=table, linenostart=1" >}}
+(defun game-tick (player map game-state stats-panel log)
+  (declare (type game-state game-state))
+  (declare (type message-log log))
+  (render-all game-state player map stats-panel *screen-width* *screen-height*)
+  (let* ((player-turn-results nil)
+         (action (handle-keys game-state))
+         (inventory-index (getf action :inventory-index))
+         (exit (getf action :quit)))
+
+    (when (eql (game-state/state game-state) :player-turn)
+      (setf (values player-turn-results game-state) (player-turn game-state map player action)))
+
+    (when (and inventory-index
+               (not (eql (game-state/previous-state game-state) :player-dead))
+               (< inventory-index (length (inventory/items (entity/inventory player)))))
+      (let ((item (nth inventory-index (inventory/items (entity/inventory player)))))
+        (format t "~A~%" (entity/name item))))
+
+    (when exit
+      (if (or (eql (game-state/state game-state) :show-inventory)
+              (eql (game-state/state game-state) :drop-inventory))
+          (setf (game-state/state game-state) (game-state/previous-state game-state))
+          (setf (game-state/running game-state) nil)))
+
+    (setf game-state (handle-player-results game-state player player-turn-results log))
+
+    (when (eql (game-state/state game-state) :enemy-turn)
+      (setf game-state (enemy-turn game-state player map log))
+      (when (eql (game-state/state game-state) :player-dead)
+        (return-from game-tick game-state))
+      (setf (game-state/state game-state) :player-turn)))
+
+  game-state)
+{{< /highlight >}}
+
+If you run the game and pick up some items, you should be able to test using the
+items from the inventory and see their names printed to the console.
+
+Now that we are able to determine the item that the player is trying to use, we
+need to be able to apply the effects of using the item. To do this, we'll add
+"use-function" and "use-args" slots to the "item" component. The "use-function"
+slot will store a pointer to the function that should be called when using a
+particular item. In this case, it would be to call a "heal" function for the
+healing potions. The "use-args" slot will hold the arguments that should be sent
+to the "use-function", such as the amount of health the item will heal.
+Let's add the slots to the item component:
+
+```lisp
+(defclass item (component)
+  ((use-function :initarg :use-function :accessor item/use-function :initform nil)
+   (use-args :initarg :use-args :accessor item/use-args :initform nil)))
+```
+
+Create a "item-functions.lisp" file and add the "heal" function. This will take
+the item component and a target to apply the healing to. The "use-args" slot
+will contain the healing amount. The function will return a result on whether
+the item was consumed and should be removed from the inventory, and a message to
+be printed to the log. If the player is already at full health, we won't consume
+the item so that it is not wasted.
+
+```lisp
+(defun heal (item target)
+  (let ((amount (getf (item/use-args item) :heal-amount)))
+    (with-slots (hp max-hp) (entity/fighter target)
+      (cond ((= hp max-hp)
+             (list :consumed nil :message "You are already at full health." :message-color (blt:yellow)))
+            (t
+             (incf hp amount)
+             (when (> hp max-hp)
+               (setf hp max-hp))
+             (list :consumed t :message "Your wounds start to feel better!" :message-color (blt:green)))))))
+```
+
+Now we need to add the use-function and use-args to the health potion when it is
+created. Update the "place-items" function:
+
+{{< highlight lisp "linenos=table, linenostart=1, hl_lines=7" >}}
+(defun place-items (room entities num-items)
+  (dotimes (item-index num-items)
+    (let* ((x (+ (random (round (/ (- (rect/x2 room) (rect/x1 room) 1) 2))) (1+ (rect/x1 room))))
+           (y (+ (random (round (/ (- (rect/y2 room) (rect/y1 room) 1) 2))) (1+ (rect/y1 room))))
+           (existing-entity (entity-at entities x y)))
+      (unless existing-entity
+        (let* ((item-component (make-instance 'item :use-function #'heal :use-args '(:heal-amount 4)))
+               (potion (make-instance 'entity :name "Healing Potion" :x x :y y :color (blt:purple)
+                                              :item item-component
+                                              :char #\! :blocks nil :render-order :item)))
+          (nconc entities (list potion)))))))
+{{< /highlight >}}
+
+Now that the item has the function to be called when it is used, we can remove
+the debug print statement from the "game-tick" function, and actually call the
+function to use the item. If the item was consumed, then remove it from the
+inventory and set the game state to the enemies turn.
+
+{{< highlight lisp "linenos=table, linenostart=1, hl_lines=5-13" >}}
+(when (and inventory-index
+            (not (eql (game-state/previous-state game-state) :player-dead))
+            (< inventory-index (length (inventory/items (entity/inventory player)))))
+    (let ((item (nth inventory-index (inventory/items (entity/inventory player)))))
+        (cond ((eql (game-state/state game-state) :show-inventory)
+                (let ((use-result (funcall (item/use-function (entity/item item)) (entity/item item) player)))
+                    (setf player-turn-results use-result)
+                    (when (getf use-result :consumed)
+                        (setf (game-state/state game-state) :enemy-turn)
+                        (setf (inventory/items (entity/inventory player))
+                                (remove-if #'(lambda (i)
+                                            (eql i item))
+                                        (inventory/items (entity/inventory player))))))))))
+{{< /highlight >}}
+
+Now if you run the game, you can pick up health potions and use them to heal
+yourself! The message log should print the results of using the function.
+![](/cl-rltut/use-items.gif)
+
 
 ## Dropping items {#dropping-items}
 
+The final thing we want to add in this part is the ability to drop items from
+the inventory. It's not particularly useful in the current state in the game,
+but in the future when there are more items, the player will want to be able to
+drop items that they don't need in order to free up space to pick up new items.
+This will involve adding a new "drop-inventory" state, and handling the 'd' key
+to enter the state:
+
+{{< highlight lisp "linenos=table, linenostart=1, hl_lines=14 23 48-51" >}}
+(defun handle-player-turn-keys ()
+  (when (blt:has-input-p)
+    (blt:key-case (blt:read)
+                  ((or :up :k) (list :move (cons 0 -1)))
+                  ((or :down :j) (list :move (cons 0 1)))
+                  ((or :left :h) (list :move (cons -1 0)))
+                  ((or :right :l) (list :move (cons 1 0)))
+                  (:y (list :move (cons -1 -1)))
+                  (:u (list :move (cons 1 -1)))
+                  (:b (list :move (cons -1 1)))
+                  (:n (list :move (cons 1 1)))
+                  (:g (list :pickup t))
+                  (:i (list :show-inventory t))
+                  (:d (list :drop-inventory t))
+                  (:escape (list :quit t))
+                  (:close (list :quit t)))))
+
+(defun player-turn (game-state map player action)
+  (let ((player-turn-results nil)
+        (move (getf action :move))
+        (pickup (getf action :pickup))
+        (show-inventory (getf action :show-inventory))
+        (drop-inventory (getf action :drop-inventory)))
+    (when move
+      (let ((destination-x (+ (entity/x player) (car move)))
+            (destination-y (+ (entity/y player) (cdr move))))
+        (unless (blocked-p map destination-x destination-y)
+          (let ((target (blocking-entity-at (game-state/entities game-state) destination-x destination-y)))
+            (cond (target
+                   (setf player-turn-results (attack (entity/fighter player) target)))
+                  (t
+                   (move player (car move) (cdr move))
+                   (fov map (entity/x player) (entity/y player)))))
+          (setf (game-state/state game-state) :enemy-turn))))
+
+    (when pickup
+      (dolist (entity (game-state/entities game-state))
+        (when (and (entity/item entity)
+                   (= (entity/x entity) (entity/x player))
+                   (= (entity/y entity) (entity/y player)))
+          (setf player-turn-results (add-item (entity/inventory player) entity)))))
+
+    (when show-inventory
+      (with-slots (previous-state state) game-state
+        (setf previous-state state
+              state :show-inventory)))
+
+    (when drop-inventory
+      (with-slots (previous-state state) game-state
+        (setf previous-state state
+              state :drop-inventory)))
+
+    (values player-turn-results game-state)))
+{{< /highlight >}}
+
+Rather than adding a new key handling function for this state, we can reuse the
+function to handle inventory keys since the input will be the same. The
+difference will be in how we interpret the results.
+
+```lisp
+(defun handle-keys (game-state)
+  (cond ((eql (game-state/state game-state) :player-turn)
+         (handle-player-turn-keys))
+        ((eql (game-state/state game-state) :player-dead)
+         (handle-player-dead-keys))
+        ((or (eql (game-state/state game-state) :show-inventory)
+             (eql (game-state/state game-state) :drop-inventory))
+         (handle-inventory-keys))))
+```
+
+In the "game-tick" method, make sure to handle the "exit" state the same way as
+with the "show-inventory" state.
+
+```lisp
+(when exit
+    (if (or (eql (game-state/state game-state) :show-inventory)
+            (eql (game-state/state game-state) :drop-inventory))
+        (setf (game-state/state game-state) (game-state/previous-state game-state))
+        (setf (game-state/running game-state) nil)))
+```
+
+To display the menu for dropping items, the only difference with the "use" menu
+is the title. Update the call to "inventory-menu" in the "render-all" function:
+
+{{< highlight lisp "linenos=table, linenostart=1, hl_lines=2-5" >}}
+(when (or (eql (game-state/state game-state) :show-inventory)
+          (eql (game-state/state game-state) :drop-inventory))
+    (let ((inventory-title (if (eql (game-state/state game-state) :show-inventory)
+                            "Press key next to item to use it, or Esc to cancel."
+                            "Press key next to item to drop it, or Esc to cancel.")))
+      (inventory-menu inventory-title (entity/inventory player) 50 screen-width screen-height)))
+{{< /highlight >}}
+
+Add a "drop-item" method to the inventory. This will remove the item from the
+inventory, and set it's position equal to the players current position.
+
+```lisp
+(defgeneric drop-item (inventory item))
+(defmethod drop-item ((inventory inventory) (item entity))
+  (let ((results nil))
+    (with-slots (items) inventory
+      (with-slots (x y) (component/owner inventory)
+        (setf (entity/x item) x
+              (entity/y item) y
+              items (remove-if #'(lambda (i)
+                                   (eql i item))
+                               items)
+              results (list :item-dropped item
+                            :message (format nil "You dropped the ~A" (entity/name item))
+                            :message-color (blt:yellow)))))))
+```
+
+Finally, update the "game-tick" to handle the results of dropping an item. It
+will call the "drop-item" function, and switch the game state to the enemies turn.
+
+{{< highlight lisp "linenos=table, linenostart=1, hl_lines=14-20" >}}
+    (when (and inventory-index
+               (not (eql (game-state/previous-state game-state) :player-dead))
+               (< inventory-index (length (inventory/items (entity/inventory player)))))
+      (let ((item (nth inventory-index (inventory/items (entity/inventory player)))))
+        (cond ((eql (game-state/state game-state) :show-inventory)
+               (let ((use-result (funcall (item/use-function (entity/item item)) (entity/item item) player)))
+                 (setf player-turn-results use-result)
+                 (when (getf use-result :consumed)
+                   (setf (game-state/state game-state) :enemy-turn)
+                   (setf (inventory/items (entity/inventory player))
+                         (remove-if #'(lambda (i)
+                                        (eql i item))
+                                    (inventory/items (entity/inventory player)))))))
+              ((eql (game-state/state game-state) :drop-inventory)
+               (let ((dropped-result (drop-item (entity/inventory player) item)))
+                 (setf player-turn-results dropped-result)
+                 (when (getf dropped-result :item-dropped)
+                   (setf (game-state/state game-state) :enemy-turn)
+                   (setf (game-state/entities game-state)
+                         (append (game-state/entities game-state) (list (getf dropped-result :item-dropped))))))))))
+{{< /highlight >}}
+
+Now you can run the game, and open the "drop item" inventory by pressing 'd'.
+Choosing an item from the inventory list will cause it to be removed from the
+inventory, and placed back on the map.
+![](/cl-rltut/drop-items.gif)
+
 
 ## Conclusion {#conclusion}
+
+That's it for now. We added an item, with an inventory system. It's just a
+healing potion now, but in the next tutorial we will look at adding a couple
+more items.
 
 You can find the current state of the code on [Github](https://github.com/nwforrer/cl-rltut/tree/part-6). The list of changes since
 the previous tutorial can be found at
